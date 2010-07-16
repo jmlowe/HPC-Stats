@@ -10,7 +10,14 @@ import time
 class MdiagDaemon(simpledaemon.Daemon):
   default_conf = '/root/mdiag_pump.conf'
   section = 'mdiag_pump'
-
+  def convert(self, label, item):
+    if not item:
+      item = None
+    elif label in ['LOAD']:
+      item = float(item)
+    else:
+      item = int(item)
+    return  (label,item) 
   def run(self):
     periodminutes = float(self.config_parser.get(self.section, 'periodminutes'))
     amqhost = self.config_parser.get(self.section,'amqhost')
@@ -25,15 +32,15 @@ class MdiagDaemon(simpledaemon.Daemon):
       t = commands.getoutput('mdiag --xml -n')
 
       dom1 = parseString(t)
-
-      msg = dict(zip((x.getAttribute('NODEID') for x in dom1.firstChild.childNodes),
+      nodes = dom1.firstChild.childNodes
+      msg = dict(zip((x.getAttribute('NODEID') for x in nodes),
             map(dict,
-                 zip((('NODESTATE',x.getAttribute('NODESTATE')) for x in dom1.firstChild.childNodes),
-                     (('RAPROC',x.getAttribute('RAPROC')) for x in dom1.firstChild.childNodes),
-                     (('RCPROC',x.getAttribute('RCPROC')) for x in dom1.firstChild.childNodes),
-                     (('RAMEM',x.getAttribute('RAMEM')) for x in dom1.firstChild.childNodes),
-                     (('RCMEM',x.getAttribute('RCMEM')) for x in dom1.firstChild.childNodes),
-                     (('LOAD',x.getAttribute('LOAD')) for x in dom1.firstChild.childNodes)))))
+                 zip((('NODESTATE',x.getAttribute('NODESTATE')) for x in nodes),
+                     (self.convert('RAPROC',x.getAttribute('RAPROC')) for x in nodes),
+                     (self.convert('RCPROC',x.getAttribute('RCPROC')) for x in nodes),
+                     (self.convert('RAMEM',x.getAttribute('RAMEM')) for x in nodes),
+                     (self.convert('RCMEM',x.getAttribute('RCMEM')) for x in nodes),
+                     (self.convert('LOAD',x.getAttribute('LOAD')) for x in nodes)))))
 
       msg = {'ts':time.time(),'data':msg}
       logging.info(`msg`)
