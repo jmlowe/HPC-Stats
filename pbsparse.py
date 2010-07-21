@@ -1,7 +1,10 @@
+#! /bin/env python2.7
 from datetime import datetime, timedelta
 from dateutil import parser as dateparser
 import re
 import gzip, bz2
+import os
+from time import sleep
 
 logpat = re.compile('(.{19});E;(\d+)(?:-(\d+))?\..*;user=(\S+) (?:account=(\S+))?.*group=(\S+).*queue=(\S+) ctime=\d+ qtime=(\d+) etime=(\d+) start=(\d+) .* exec_host=(\S+) .* Resource_List.walltime=(\d+:\d+:\d+) .*\n(\S+)')
 
@@ -33,17 +36,17 @@ def walltimeconvert(walltime):
   hours,minutes,seconds = walltime.split(':')
   return timedelta(0,(int(hours)*60+int(minutes))*60+int(seconds),0)
 
-def gen_open():
-  today = '%d%02d%02d' % (datetime.now().year,datetime.now().month,datetime.now().day
-  filename = '/var/spool/torque/server_priv/accounting/' + today)
+def gen_cat():
+  today = '%d%02d%02d' % (datetime.now().year,datetime.now().month,datetime.now().day)
+  filename = '/var/spool/torque/server_priv/accounting/' + today
   s = open(filename,'r')
   while True:
-    for item in s:
+    for item in s.readlines():
       yield item + s.name.replace('/var/spool/torque/server_priv/accounting/','')
     sleep(60)
-    if os.stat(filename).st_size == f.tell() and today !=  '%d%02d%02d' % (datetime.now().year,datetime.now().month,datetime.now().day
-      today =  '%d%02d%02d' % (datetime.now().year,datetime.now().month,datetime.now().day
-      filename = '/var/spool/torque/server_priv/accounting/' + today)
+    if os.stat(filename).st_size == s.tell() and not today ==  '%d%02d%02d' % (datetime.now().year,datetime.now().month,datetime.now().day):
+      today =  '%d%02d%02d' % (datetime.now().year,datetime.now().month,datetime.now().day)
+      filename = '/var/spool/torque/server_priv/accounting/' + today
       s = open(filename,'r') 
 
 def gen_open(filenames):
@@ -63,7 +66,6 @@ def field_map(dictseq,name,func, dep_name= None):
     yield d
 
 def jobs():
-#  files = gen_open(filelist)
   lines = gen_cat()
   groups = (logpat.match(line) for line in lines)
   tuples = (g.groups() for g in groups if g)
