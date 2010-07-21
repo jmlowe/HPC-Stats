@@ -33,10 +33,19 @@ def walltimeconvert(walltime):
   hours,minutes,seconds = walltime.split(':')
   return timedelta(0,(int(hours)*60+int(minutes))*60+int(seconds),0)
 
-def gen_cat(sources):
-  for s in sources:
+def gen_open(sources):
+  today = '%d%02d%02d' % (datetime.now().year,datetime.now().month,datetime.now().day
+  filename = '/var/spool/torque/server_priv/accounting/' + today)
+  s = open(filename,'r')
+  while True:
     for item in s:
-      yield item + s.name.replace(".gz","").replace(".bz2","").replace('/var/spool/torque/server_priv/accounting/','')
+      yield item + s.name.replace('/var/spool/torque/server_priv/accounting/','')
+    sleep(60)
+    if os.stat(filename).st_size == f.tell() and today !=  '%d%02d%02d' % (datetime.now().year,datetime.now().month,datetime.now().day
+      today =  '%d%02d%02d' % (datetime.now().year,datetime.now().month,datetime.now().day
+      filename = '/var/spool/torque/server_priv/accounting/' + today)
+      s = open(filename,'r') 
+
 def gen_open(filenames):
   for name in filenames:
     if name.endswith(".gz"):
