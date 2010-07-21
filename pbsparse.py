@@ -33,7 +33,7 @@ def walltimeconvert(walltime):
   hours,minutes,seconds = walltime.split(':')
   return timedelta(0,(int(hours)*60+int(minutes))*60+int(seconds),0)
 
-def gen_open(sources):
+def gen_open():
   today = '%d%02d%02d' % (datetime.now().year,datetime.now().month,datetime.now().day
   filename = '/var/spool/torque/server_priv/accounting/' + today)
   s = open(filename,'r')
@@ -62,9 +62,9 @@ def field_map(dictseq,name,func, dep_name= None):
     d[dep_name] = func(d[name])
     yield d
 
-def jobs(filelist):
-  files = gen_open(filelist)
-  lines = gen_cat(files)
+def jobs():
+#  files = gen_open(filelist)
+  lines = gen_cat()
   groups = (logpat.match(line) for line in lines)
   tuples = (g.groups() for g in groups if g)
   log = (dict(zip(colnames,t)) for t in tuples)
@@ -87,5 +87,5 @@ def jobs(filelist):
 
 if __name__ == "__main__":
   import sys
-  for job in jobs(sys.argv[1:]):
+  for job in jobs():
     print job
