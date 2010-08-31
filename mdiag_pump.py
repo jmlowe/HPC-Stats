@@ -54,7 +54,8 @@ class MdiagDaemon(simpledaemon.Daemon):
         publisher.send(msg)
         publisher.close()
         amqpconn.close()
-      
+      except:
+        pass
       time.sleep(60*periodminutes)
 
 
