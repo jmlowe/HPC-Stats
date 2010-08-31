@@ -45,14 +45,16 @@ class MdiagDaemon(simpledaemon.Daemon):
       msg = {'ts':time.time(),'data':msg}
       logging.info(`msg`)
 
-      amqpconn = AMQPConnection(hostname=amqhost, port=amqport,
-                           userid=amquser, password=amqpass,
-                           vhost=amqvhost)
-      publisher = Publisher(connection=amqpconn,exchange=amqexchange, 
+      try:
+        amqpconn = AMQPConnection(hostname=amqhost, port=amqport,
+                             userid=amquser, password=amqpass,
+                             vhost=amqvhost)
+        publisher = Publisher(connection=amqpconn,exchange=amqexchange, 
                             routing_key=routing_key,exchange_type='topic')
-      publisher.send(msg)
-      publisher.close()
-      amqpconn.close()
+        publisher.send(msg)
+        publisher.close()
+        amqpconn.close()
+      
       time.sleep(60*periodminutes)
 
 
