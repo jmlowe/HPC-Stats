@@ -3,8 +3,8 @@ import simpledaemon
 import logging
 import commands
 from xml.dom.minidom import parseString
-from carrot.connection import AMQPConnection
-from carrot.messaging import Publisher
+from kombu.connection import AMQPConnection
+from kombu.messaging import Publisher
 import time
 
 class MdiagDaemon(simpledaemon.Daemon):
