@@ -1,10 +1,14 @@
 #! /bin/env python2.7
+import simpledaemon
 from datetime import datetime, timedelta
 from dateutil import parser as dateparser
 import re
 import gzip, bz2
 import os
 from time import sleep
+from kombu.connection import BrokerConnection
+from kombu.messaging import Producer,Exchange
+
 
 logpat = re.compile('(.{19});E;(\d+)(?:-(\d+))?\..*;user=(\S+) (?:account=(\S+))?.*group=(\S+).*queue=(\S+) ctime=\d+ qtime=(\d+) etime=(\d+) start=(\d+) .* exec_host=(\S+) .* Resource_List.walltime=(\d+:\d+:\d+) .*\n(\S+)')
 
@@ -88,7 +92,29 @@ def jobs():
   log = field_map(log,"filename",unicode)
   return log
 
+class PBSPumpDaemon(simpledaemon.Daemon):
+   default_conf = '/etc/pbs_pump.conf'
+   section = 'pbs_pump'
+   def run(self):
+     amqhost = self.config_parser.get(self.section,'amqhost')
+     amqport = int(self.config_parser.get(self.section,'amqport'))
+     amquser = self.config_parser.get(self.section,'amquser')
+     amqpass = self.config_parser.get(self.section,'amqpass')
+     amqvhost = self.config_parser.get(self.section,'amqvhost')
+     amqexchange = self.config_parser.get(self.section,'amqexchange')
+     routing_key = self.config_parser.get(self.section,'routing_key')
+     connection = BrokerConnection(hostname=amqhost, port=amqport,
+                             userid=amquser, password=amqpass,
+                             virtual_host=amqvhost)
+     channel = connection.channel()
+     exchange = Exchange(amqexchange,'topic',turable=True)
+     producer = Producer(channel,exchange=exchange, 
+                            routing_key=routing_key)
+     for job in jobs():
+        producer.revive(channel)
+        producer.publish(job)
+
 if __name__ == "__main__":
-  import sys
-  for job in jobs():
-    print job
+  pbspumpdaemon = PBSPumpDaemon()
+  pbspumpdaemon.main()
+
