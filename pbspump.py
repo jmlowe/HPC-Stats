@@ -52,6 +52,8 @@ def gen_cat():
     if os.stat(filename).st_size == s.tell() and not today ==  '%d%02d%02d' % (datetime.now().year,datetime.now().month,datetime.now().day):
       today =  '%d%02d%02d' % (datetime.now().year,datetime.now().month,datetime.now().day)
       filename = '/var/spool/torque/server_priv/accounting/' + today
+      while not os.access(filename,os.R_OK):
+         sleep(60)
       s = open(filename,'r') 
 
 def gen_open(filenames):
