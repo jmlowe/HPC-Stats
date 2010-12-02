@@ -1,5 +1,5 @@
 #! /bin/env python2.7
-import simpledaemon
+import simpledaemon, logging
 from datetime import datetime, timedelta
 from dateutil import parser as dateparser
 import re
