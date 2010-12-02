@@ -45,6 +45,7 @@ def gen_cat():
   today = '%d%02d%02d' % (datetime.now().year,datetime.now().month,datetime.now().day)
   filename = '/var/spool/torque/server_priv/accounting/' + today
   s = open(filename,'r')
+  logging.info('Now reading from %s' % filename)
   while True:
     for item in s.readlines():
       yield item + s.name.replace('/var/spool/torque/server_priv/accounting/','')
@@ -54,7 +55,8 @@ def gen_cat():
       filename = '/var/spool/torque/server_priv/accounting/' + today
       while not os.access(filename,os.R_OK):
          sleep(60)
-      s = open(filename,'r') 
+      s = open(filename,'r')
+      logging.info('Now reading from %s' % filename) 
 
 def gen_open(filenames):
   for name in filenames:
