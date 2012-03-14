@@ -11,12 +11,12 @@ from kombu.messaging import Producer,Exchange
 
 entire_history = 'yes'
 
-logpat = re.compile('(.{19});E;(\d+)(?:-(\d+))?\..*;user=(\S+) (?:account=(\S+))?.*group=(\S+).*queue=(\S+) ctime=\d+ qtime=(\d+) etime=(\d+) start=(\d+) .* exec_host=(\S+) .* Resource_List.walltime=(\d+:\d+:\d+) .*Exit_status=(\S+) .*resources_used.mem=(\d+).*\n(\S+)')
+logpat = re.compile('(.{19});E;(\d+)(?:-(\d+))?\..*;user=(\S+) (?:account=(\S+))?.*group=(\S+).*queue=(\S+) ctime=\d+ qtime=(\d+) etime=(\d+) start=(\d+) .* exec_host=(\S+) (?:Resource_List.mem=(\S+))?.* Resource_List.walltime=(\d+:\d+:\d+) .*Exit_status=(\S+) .*resources_used.mem=(\d+).*\n(\S+)')
 jobstartpat = re.compile('(.{19});S;(\d+)(?:-(\d+))?\..*;user=(\S+) (?:account=(\S+))?.*group=(\S+).*queue=(\S+) ctime=\d+ qtime=(\d+) etime=(\d+) start=(\d+) .* exec_host=(\S+) .* Resource_List.walltime=(\d+:\d+:\d+) .*\n(\S+)')
 
 exechostpat = re.compile('/\d+')
 
-colnames = ('type','completion_time','jobid','step','username','project','group','queue','submit_time','eligibletime','start_time','nodelist','walltime','exit_status','mem','filename')
+colnames = ('type','completion_time','jobid','step','username','project','group','queue','submit_time','eligibletime','start_time','nodelist','requested_mem,'walltime','exit_status','mem','filename')
 
 def uniquify(seq, idfun=None): 
     # order preserving
@@ -38,6 +38,18 @@ def stepconvert(step):
   if not step:
     return 0
   return int(step)
+def requested_mem_convert(reqested_mem):
+  if requested_mem.endswith('gb'):
+    returnvalue = int(requested_mem.replace('gb',''))*1024*1024*1024
+  elseif requested_mem.endswith('mb'):
+    returnvalue = int(requested_mem.replace('mb',''))*1024*1024
+  elseif requested_mem.endswith('kb'):
+    returnvalue = int(requested_mem.replace('kb',''))*1024
+  elseif requested_mem.endswith('b'):
+    returnvalue = int(requested_mem.replace('b',''))
+  else:
+    returnvalue = 0
+  return returnvalue
 def walltimeconvert(walltime):
   hours,minutes,seconds = walltime.split(':')
   return (int(hours)*60+int(minutes))*60+int(seconds)
@@ -124,6 +136,7 @@ def jobs():
   log = field_map(log,"exit_status",unicode)
   log = field_map(log,"mem",int)
   log = field_map(log,"filename",unicode)
+  log = field_map(log,"requested_mem",requested_mem_convert)
   return log
 
 class PBSPumpDaemon(simpledaemon.Daemon):
