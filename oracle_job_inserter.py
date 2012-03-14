@@ -38,8 +38,8 @@ def process_job(msg,body):
                   ts_literal(msg["eligibletime"]),
                   msg["tasks"],msg["walltime"]%86400,msg["walltime"]/86400,
                   cluster,msg["username"],msg["filename"],
-                  queue_id,len(msg["nodelist"]),msg["mem"])
-            cursor.execute("""insert into job_transaction (JOB_ID,JOB_STEP_NO,UNIX_GROUP,PROJECT,SUBMIT_TIME,BEGIN_TIME,COMPLETION_TIME,ELIGIBLETIME,TASK_COUNT,REQ_WALLTIME,CLUSTER_NAME,USER_ID,LOG_FILENAME,QUEUE_ID,NODE_COUNT,MEM_USED) values (%d,%d,'%s','%s',timestamp '%s',timestamp '%s', timestamp '%s',timestamp '%s', %d,interval '%d' second(6) + interval '%d' day(3), '%s','%s','%s',%d,%d,%d)""" % values)
+                  queue_id,len(msg["nodelist"]),msg["exit_status"],msg["mem"],msg["requested_mem"])
+            cursor.execute("""insert into job_transaction (JOB_ID,JOB_STEP_NO,UNIX_GROUP,PROJECT,SUBMIT_TIME,BEGIN_TIME,COMPLETION_TIME,ELIGIBLETIME,TASK_COUNT,REQ_WALLTIME,CLUSTER_NAME,USER_ID,LOG_FILENAME,QUEUE_ID,NODE_COUNT,FINALJOBSTATE,MEM_USED,REQUESTED_MEM) values (%d,%d,'%s','%s',timestamp '%s',timestamp '%s', timestamp '%s',timestamp '%s', %d,interval '%d' second(6) + interval '%d' day(3), '%s','%s','%s',%d,%d,'%s',%d,%d)""" % values)
             ora_con.commit()
             cursor.execute("select job_transactionid from job_transaction where JOB_ID=%d and JOB_STEP_NO=%d and SUBMIT_TIME=timestamp '%s' and COMPLETION_TIME= timestamp '%s' and CLUSTER_NAME='%s'" % 
                      (msg["jobid"],msg["step"],
