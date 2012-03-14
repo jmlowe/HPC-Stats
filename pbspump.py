@@ -11,12 +11,12 @@ from kombu.messaging import Producer,Exchange
 
 entire_history = 'yes'
 
-logpat = re.compile('(.{19});E;(\d+)(?:-(\d+))?\..*;user=(\S+) (?:account=(\S+))?.*group=(\S+).*queue=(\S+) ctime=\d+ qtime=(\d+) etime=(\d+) start=(\d+) .* exec_host=(\S+) .* Resource_List.walltime=(\d+:\d+:\d+) .*resources_used.mem=(\d+).*\n(\S+)')
+logpat = re.compile('(.{19});E;(\d+)(?:-(\d+))?\..*;user=(\S+) (?:account=(\S+))?.*group=(\S+).*queue=(\S+) ctime=\d+ qtime=(\d+) etime=(\d+) start=(\d+) .* exec_host=(\S+) .* Resource_List.walltime=(\d+:\d+:\d+) .*Exit_status=(\S+) .*resources_used.mem=(\d+).*\n(\S+)')
 jobstartpat = re.compile('(.{19});S;(\d+)(?:-(\d+))?\..*;user=(\S+) (?:account=(\S+))?.*group=(\S+).*queue=(\S+) ctime=\d+ qtime=(\d+) etime=(\d+) start=(\d+) .* exec_host=(\S+) .* Resource_List.walltime=(\d+:\d+:\d+) .*\n(\S+)')
 
 exechostpat = re.compile('/\d+')
 
-colnames = ('type','completion_time','jobid','step','username','project','group','queue','submit_time','eligibletime','start_time','nodelist','walltime','mem','filename')
+colnames = ('type','completion_time','jobid','step','username','project','group','queue','submit_time','eligibletime','start_time','nodelist','walltime','exit_status','mem','filename')
 
 def uniquify(seq, idfun=None): 
     # order preserving
@@ -121,6 +121,7 @@ def jobs():
   log = field_map(log,"username", unicode)
   log = field_map(log,"group",unicode)
   log = field_map(log,"queue",unicode)
+  log = field_map(log,"exit_status",unicode)
   log = field_map(log,"mem",int)
   log = field_map(log,"filename",unicode)
   return log
