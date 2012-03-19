@@ -16,7 +16,7 @@ jobstartpat = re.compile('(.{19});S;(\d+)(?:-(\d+))?\..*;user=(\S+) (?:account=(
 
 exechostpat = re.compile('/\d+')
 
-colnames = ('type','completion_time','jobid','step','username','project','group','queue','submit_time','eligibletime','start_time','nodelist','requested_mem,'walltime','exit_status','mem','filename')
+colnames = ('type','completion_time','jobid','step','username','project','group','queue','submit_time','eligibletime','start_time','nodelist','requested_mem','walltime','exit_status','mem','filename')
 
 def uniquify(seq, idfun=None): 
     # order preserving
