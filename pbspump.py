@@ -38,7 +38,7 @@ def stepconvert(step):
   if not step:
     return 0
   return int(step)
-def requested_mem_convert(reqested_mem):
+def requested_mem_convert(requested_mem):
   if requested_mem.endswith('gb'):
     returnvalue = int(requested_mem.replace('gb',''))*1024*1024*1024
   elif requested_mem.endswith('mb'):
