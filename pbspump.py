@@ -12,7 +12,7 @@ from kombu.messaging import Producer,Exchange
 entire_history = 'yes'
 
 logpat = re.compile('(.{19});E;(\d+)(?:-(\d+))?\..*;user=(\S+) (?:account=(\S+))?.*group=(\S+).*queue=(\S+) ctime=\d+ qtime=(\d+) etime=(\d+) start=(\d+) .* exec_host=(\S+) (?:Resource_List.mem=(\S+))?.* Resource_List.walltime=(\d+:\d+:\d+) .*Exit_status=(\S+) .*resources_used.mem=(\d+).*\n(\S+)')
-jobstartpat = re.compile('(.{19});S;(\d+)(?:-(\d+))?\..*;user=(\S+) (?:account=(\S+))?.*group=(\S+).*queue=(\S+) ctime=\d+ qtime=(\d+) etime=(\d+) start=(\d+) .* exec_host=(\S+) .* Resource_List.walltime=(\d+:\d+:\d+) .*\n(\S+)')
+jobstartpat = re.compile('(.{19});S;(\d+)(?:-(\d+))?\..*;user=(\S+) (?:account=(\S+))?.*group=(\S+).*queue=(\S+) ctime=\d+ qtime=(\d+) etime=(\d+) start=(\d+) .* exec_host=(\S+).*(?:Resource_List.mem=(\S+))?.*Resource_List.walltime=(\d+:\d+:\d+).*(?:Exit_status=(\S+))?.*(?:resources_used.mem=(\d+))?.*\n(\S+)')
 
 exechostpat = re.compile('/\d+')
 
