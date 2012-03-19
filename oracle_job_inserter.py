@@ -63,6 +63,14 @@ def process_job(msg,body):
 
     except cx_Oracle.IntegrityError, exc:
       ora_con.rollback()
+      values = (msg["group"],msg['project'],
+                  ts_literal(msg["start_time"]),
+                  ts_literal(msg["eligibletime"]),
+                  msg["tasks"],msg["walltime"]%86400,msg["walltime"]/86400,
+                  msg["username"],msg["filename"],
+                  queue_id,len(msg["nodelist"]),msg["exit_status"],msg["mem"],msg["requested_mem"],
+                  msg["jobid"],msg["step"],ts_literal(msg["submit_time"]),ts_literal(msg["completion_time"]),cluster)
+      cursor.execute("""update job_trasaction set UNIX_GROUP = '%s', PROJECT = '%s', BEGIN_TIME = timestamp '%s',ELIGIBLETIME = timestamp '%s', TASK_COUNT = %d, REQ_WALLTIME = interval '%d' second(6) + interval '%d' day(3), USER_ID = '%s', LOG_FILENAME = '%s', QUEUE_ID= %d, NODE_COUNT = %d, FINALJOBSTATE '%s', MEM_USED = %d, REQUESTED_MEM = %d where JOB_ID=%d and JOB_STEP_NO=%d and SUBMIT_TIME=timestamp '%s' and COMPLETION_TIME= timestamp '%s' and CLUSTER_NAME='%s'""" % values)
       body.ack()
       break
     except cx_Oracle.OperationalError, exc:
