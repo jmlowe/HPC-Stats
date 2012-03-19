@@ -43,9 +43,9 @@ def requested_mem_convert(reqested_mem):
     returnvalue = int(requested_mem.replace('gb',''))*1024*1024*1024
   elif requested_mem.endswith('mb'):
     returnvalue = int(requested_mem.replace('mb',''))*1024*1024
-  elseif requested_mem.endswith('kb'):
+  elif requested_mem.endswith('kb'):
     returnvalue = int(requested_mem.replace('kb',''))*1024
-  elseif requested_mem.endswith('b'):
+  elif requested_mem.endswith('b'):
     returnvalue = int(requested_mem.replace('b',''))
   else:
     returnvalue = 0
