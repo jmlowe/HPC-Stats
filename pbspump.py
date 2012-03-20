@@ -57,7 +57,7 @@ def walltimeconvert(walltime):
   return (int(hours)*60+int(minutes))*60+int(seconds)
 #  return timedelta(0,(int(hours)*60+int(minutes))*60+int(seconds),0)
 def exit_status_convert(exit_status):
-  if exit_code == None:
+  if exit_status == None:
     return None 
   else:
     return unicode(exit_status)
