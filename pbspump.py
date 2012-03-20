@@ -39,7 +39,9 @@ def stepconvert(step):
     return 0
   return int(step)
 def requested_mem_convert(requested_mem):
-  if requested_mem.endswith('gb'):
+  if requested_mem == None:
+    returnvalue = None
+  elif requested_mem.endswith('gb'):
     returnvalue = int(requested_mem.replace('gb',''))*1024*1024*1024
   elif requested_mem.endswith('mb'):
     returnvalue = int(requested_mem.replace('mb',''))*1024*1024
@@ -54,6 +56,11 @@ def walltimeconvert(walltime):
   hours,minutes,seconds = walltime.split(':')
   return (int(hours)*60+int(minutes))*60+int(seconds)
 #  return timedelta(0,(int(hours)*60+int(minutes))*60+int(seconds),0)
+def exit_status_convert(exit_status):
+  if exit_code == None:
+    return None 
+  else:
+    return unicode(exit_status)
 
 def gen_cat():
   today = '%d%02d%02d' % (datetime.now().year,datetime.now().month,datetime.now().day)
@@ -133,7 +140,7 @@ def jobs():
   log = field_map(log,"username", unicode)
   log = field_map(log,"group",unicode)
   log = field_map(log,"queue",unicode)
-  log = field_map(log,"exit_status",unicode)
+  log = field_map(log,"exit_status",exit_status_convert)
   log = field_map(log,"mem",int)
   log = field_map(log,"filename",unicode)
   log = field_map(log,"requested_mem",requested_mem_convert)
