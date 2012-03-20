@@ -12,7 +12,7 @@ from kombu.messaging import Producer,Exchange
 entire_history = 'yes'
 
 logpat = re.compile('(.{19});E;(\d+)(?:-(\d+))?\..*;user=(\S+) (?:account=(\S+))?.*group=(\S+).*queue=(\S+) ctime=\d+ qtime=(\d+) etime=(\d+) start=(\d+) .* exec_host=(\S+) (?:Resource_List.mem=(\S+))?.* Resource_List.walltime=(\d+:\d+:\d+) .*Exit_status=(\S+) .*resources_used.mem=(\d+).*\n(\S+)')
-jobstartpat = re.compile('(.{19});S;(\d+)(?:-(\d+))?\..*;user=(\S+) (?:account=(\S+))?.*group=(\S+).*queue=(\S+) ctime=\d+ qtime=(\d+) etime=(\d+) start=(\d+) .* exec_host=(\S+).*(?:Resource_List.mem=(\S+))?.*Resource_List.walltime=(\d+:\d+:\d+).*(?:Exit_status=(\S+))?.*(?:resources_used.mem=(\d+))?.*\n(\S+)')
+jobstartpat = re.compile('(.{19});S;(\d+)(?:-(\d+))?\..*;user=(\S+) (?:account=(\S+))?.*group=(\S+).*queue=(\S+) ctime=\d+ qtime=(\d+) etime=(\d+) start=(\d+).*exec_host=(\S+).*(?:Resource_List.mem=(\S+))?.*Resource_List.walltime=(\d+:\d+:\d+).*\n(\S+)')
 
 exechostpat = re.compile('/\d+')
 
@@ -97,6 +97,7 @@ def gen_open(filenames):
       yield open(name)
 
 def field_map(dictseq,name,func, dep_name= None):
+  logging.debug(`[dictseq,name,func,dep_name]`)
   if dep_name == None:
     dep_name = name
   for d in dictseq:
@@ -105,11 +106,12 @@ def field_map(dictseq,name,func, dep_name= None):
 
 def groups_gen(lines):
   for line in lines:
-    if logpat.match(line):
-       yield (('exit',))+logpat.match(line).groups()
+    exitmatch = logpat.match(line)
+    if exitmatch:
+       yield (('exit',))+exitmatch.groups()
     elif jobstartpat.match(line):
        g = (('start',))+jobstartpat.match(line).groups()
-       yield g[:-1]+(0,)+g[-1:]
+       yield g[:-1]+(None,)+(0,)+g[-1:]
 
 def job_start_completion_map(dictseq):
   for d in dictseq:
