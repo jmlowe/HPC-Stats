@@ -16,7 +16,7 @@ jobstartpat = re.compile('(.{19});S;(\d+)(?:-(\d+))?\..*;user=(\S+) (?:account=(
 
 exechostpat = re.compile('/\d+')
 
-colnames = ('type','completion_time','jobid','step','username','project','group','queue','submit_time','eligibletime','start_time','nodelist','requested_mem','walltime','exit_status','mem','filename')
+colnames = ('type','original_log_line','completion_time','jobid','step','username','project','group','queue','submit_time','eligibletime','start_time','nodelist','requested_mem','walltime','exit_status','mem','filename')
 
 def uniquify(seq, idfun=None): 
     # order preserving
@@ -108,9 +108,9 @@ def groups_gen(lines):
   for line in lines:
     exitmatch = logpat.match(line)
     if exitmatch:
-       yield (('exit',))+exitmatch.groups()
+       yield (('exit',line.strip()))+exitmatch.groups()
     elif jobstartpat.match(line):
-       g = (('start',))+jobstartpat.match(line).groups()
+       g = (('start',line.strip()))+jobstartpat.match(line).groups()
        yield g[:-1]+(None,)+(0,)+g[-1:]
 
 def job_start_completion_map(dictseq):
