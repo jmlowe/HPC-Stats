@@ -16,6 +16,9 @@ def process_job(msg,body):
         with cx_Oracle.Connection("user/password@"+dsn) as ora_con:
           cursor =  ora_con.cursor()
           print msg
+          if not 'exit_status' in msg.keys():
+            body.ack()
+            break 
 #          print dir(body)
           cluster = body.delivery_info["routing_key"].replace("log.job.","").upper()
           cursor.execute("""select queue_record_num from job_queue where QUEUE_NAME='%s' and "cluster"='%s'""" % (msg["queue"],cluster))
@@ -26,7 +29,7 @@ def process_job(msg,body):
             cursor.execute("""select queue_record_num from job_queue where QUEUE_NAME='%s' and "cluster"='%s'""" % (msg["queue"],cluster))
             queue_id = cursor.fetchall()
           queue_id = queue_id[0][0]
-          if msg['type'] == 'exit':
+          if msg['type'] == 'exit' and msg['start_time'] != 0:
             if not msg['project']: 
               msg['project']='NULL'
             else:
@@ -70,7 +73,8 @@ def process_job(msg,body):
                   msg["username"],msg["filename"],
                   queue_id,len(msg["nodelist"]),msg["exit_status"],msg["mem"],msg["requested_mem"],
                   msg["jobid"],msg["step"],ts_literal(msg["submit_time"]),ts_literal(msg["completion_time"]),cluster)
-      cursor.execute("""update job_trasaction set UNIX_GROUP = '%s', PROJECT = '%s', BEGIN_TIME = timestamp '%s',ELIGIBLETIME = timestamp '%s', TASK_COUNT = %d, REQ_WALLTIME = interval '%d' second(6) + interval '%d' day(3), USER_ID = '%s', LOG_FILENAME = '%s', QUEUE_ID= %d, NODE_COUNT = %d, FINALJOBSTATE '%s', MEM_USED = %d, MEM_REQ = %d where JOB_ID=%d and JOB_STEP_NO=%d and SUBMIT_TIME=timestamp '%s' and COMPLETION_TIME= timestamp '%s' and CLUSTER_NAME='%s'""" % values)
+      cursor.execute("""update job_transaction set UNIX_GROUP = '%s', PROJECT = '%s', BEGIN_TIME = timestamp '%s',ELIGIBLETIME = timestamp '%s', TASK_COUNT = %d, REQ_WALLTIME = interval '%d' second(6) + interval '%d' day(3), USER_ID = '%s', LOG_FILENAME = '%s', QUEUE_ID = %d, NODE_COUNT = %d, FINALJOBSTATE = '%s', MEM_USED = %d, MEM_REQ = %d where JOB_ID=%d and JOB_STEP_NO=%d and SUBMIT_TIME=timestamp '%s' and COMPLETION_TIME= timestamp '%s' and CLUSTER_NAME='%s'""" % values)
+      ora_con.commit()
       body.ack()
       break
     except cx_Oracle.OperationalError, exc:
