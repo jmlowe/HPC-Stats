@@ -149,7 +149,7 @@ def jobdict(lines):
        jobdict['step'] = None
      for item in conversiondict:
        if conversiondict[item] in linedict:
-         jobdict[item] = linedict[conversiondict[item]]
+         jobdict[item] = linedict[conversiondict[item]].replace("'","")
        else:
          jobdict[item] = None
      yield jobdict
