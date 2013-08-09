@@ -139,7 +139,7 @@ def jobdict(lines):
        continue
      splitline = line.split()
 #     logging.debug(`splitline`)
-     linedict = dict((x.split('=') for x in splitline[2:-1]+splitline[1].split(';')[3:] if not 'ppn=' in x))
+     linedict = dict((x.split('=') for x in splitline[2:-1]+splitline[1].split(';')[3:] if len(x.split('=')) == 2))
      jobdict = {'original_line':line, 'type':type, 'filename':splitline[-1]}
      jobid = re.match('.*;E;(\d+)(?:-(\d+))?.*;user=\S+',splitline[1]).groups()
      jobdict['jobid'] = jobid[0]
