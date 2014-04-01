@@ -1,7 +1,9 @@
+import sys
 import cx_Oracle
 from kombu.connection import BrokerConnection
 from kombu.messaging import Exchange, Queue, Consumer
 from datetime import datetime
+from time import sleep
 exchange = Exchange("amq.topic", "topic", durable=True)
 q = Queue("oracle_job_inserter", exchange=exchange, key="log.job.#")
 q.routing_key="log.job.#"
@@ -32,8 +34,8 @@ def process_job(msg,body):
           if msg['type'] == 'exit' and msg['start_time'] != 0:
             if not msg['project']: 
               msg['project']='NULL'
-            else:
-              msg['project'] = "'" + msg['project'] + "'"
+#            else:
+#              msg['project'] = "'" + msg['project'] + "'"
             values = (msg["jobid"],msg["step"],msg["group"],msg['project'],
                   ts_literal(msg["submit_time"]),
                   ts_literal(msg["start_time"]),
@@ -41,8 +43,15 @@ def process_job(msg,body):
                   ts_literal(msg["eligibletime"]),
                   msg["tasks"],msg["walltime"]%86400,msg["walltime"]/86400,
                   cluster,msg["username"],msg["filename"],
-                  queue_id,len(msg["nodelist"]),msg["exit_status"],msg["mem"],msg["requested_mem"])
-            cursor.execute("""insert into job_transaction (JOB_ID,JOB_STEP_NO,UNIX_GROUP,PROJECT,SUBMIT_TIME,BEGIN_TIME,COMPLETION_TIME,ELIGIBLETIME,TASK_COUNT,REQ_WALLTIME,CLUSTER_NAME,USER_ID,LOG_FILENAME,QUEUE_ID,NODE_COUNT,FINALJOBSTATE,MEM_USED,MEM_REQ) values (%d,%d,'%s','%s',timestamp '%s',timestamp '%s', timestamp '%s',timestamp '%s', %d,interval '%d' second(6) + interval '%d' day(3), '%s','%s','%s',%d,%d,'%s',%d,%d)""" % values)
+                  queue_id,len(msg["nodelist"]),msg["exit_status"],msg["mem"],msg["requested_mem"],msg["gres"])
+            if 'vmem' in msg and 'requested_vmem' in msg:
+              optional_vmem = ((',VMEM_USED,VMEM_REQ',),(',%d,%d' % (msg["vmem"],msg["requested_vmem"]),))
+            else:
+              optional_vmem = (('',),('',))
+            values = optional_vmem[0]+values+optional_vmem[1]
+            print """insert into job_transaction (JOB_ID,JOB_STEP_NO,UNIX_GROUP,PROJECT,SUBMIT_TIME,BEGIN_TIME,COMPLETION_TIME,ELIGIBLETIME,TASK_COUNT,REQ_WALLTIME,CLUSTER_NAME,USER_ID,LOG_FILENAME,QUEUE_ID,NODE_COUNT,FINALJOBSTATE,MEM_USED,MEM_REQ,GRES%s) values (%d,%d,'%s','%s',timestamp '%s',timestamp '%s', timestamp '%s',timestamp '%s', %d,interval '%d' second(6) + interval '%d' day(3), '%s','%s','%s',%d,%d,'%s',%d,%d,'%s'%s)""" % values
+            cursor.execute("""insert into job_transaction (JOB_ID,JOB_STEP_NO,UNIX_GROUP,PROJECT,SUBMIT_TIME,BEGIN_TIME,COMPLETION_TIME,ELIGIBLETIME,TASK_COUNT,REQ_WALLTIME,CLUSTER_NAME,USER_ID,LOG_FILENAME,QUEUE_ID,NODE_COUNT,FINALJOBSTATE,MEM_USED,MEM_REQ,GRES%s) values (%d,%d,'%s','%s',timestamp '%s',timestamp '%s', timestamp '%s',timestamp '%s', %d,interval '%d' second(6) + interval '%d' day(3), '%s','%s','%s',%d,%d,'%s',%d,%d,'%s'%s)""" % values)
+                       
             ora_con.commit()
             cursor.execute("select job_transactionid from job_transaction where JOB_ID=%d and JOB_STEP_NO=%d and SUBMIT_TIME=timestamp '%s' and COMPLETION_TIME= timestamp '%s' and CLUSTER_NAME='%s'" % 
                      (msg["jobid"],msg["step"],
@@ -63,7 +72,6 @@ def process_job(msg,body):
                ora_con.commit()
           body.ack()
           break    
-
     except cx_Oracle.IntegrityError, exc:
       ora_con.rollback()
       values = (msg["group"],msg['project'],
@@ -71,14 +79,27 @@ def process_job(msg,body):
                   ts_literal(msg["eligibletime"]),
                   msg["tasks"],msg["walltime"]%86400,msg["walltime"]/86400,
                   msg["username"],msg["filename"],
-                  queue_id,len(msg["nodelist"]),msg["exit_status"],msg["mem"],msg["requested_mem"],
+                  queue_id,len(msg["nodelist"]),msg["exit_status"],msg["mem"],msg["requested_mem"],msg["gres"],
                   msg["jobid"],msg["step"],ts_literal(msg["submit_time"]),ts_literal(msg["completion_time"]),cluster)
-      cursor.execute("""update job_transaction set UNIX_GROUP = '%s', PROJECT = '%s', BEGIN_TIME = timestamp '%s',ELIGIBLETIME = timestamp '%s', TASK_COUNT = %d, REQ_WALLTIME = interval '%d' second(6) + interval '%d' day(3), USER_ID = '%s', LOG_FILENAME = '%s', QUEUE_ID = %d, NODE_COUNT = %d, FINALJOBSTATE = '%s', MEM_USED = %d, MEM_REQ = %d where JOB_ID=%d and JOB_STEP_NO=%d and SUBMIT_TIME=timestamp '%s' and COMPLETION_TIME= timestamp '%s' and CLUSTER_NAME='%s'""" % values)
+      if 'vmem' in msg and 'requested_vmem' in msg:
+        optional_vmem = ('VMEM_USED = %d,VMEM_REQ = %d,' % (msg["vmem"],msg["requested_vmem"]),)
+      else:
+        optional_vmem = ('',)
+      values = optional_vmem + values 
+
+      print """update job_transaction set %s UNIX_GROUP = '%s', PROJECT = '%s', BEGIN_TIME = timestamp '%s',ELIGIBLETIME = timestamp '%s', TASK_COUNT = %d, REQ_WALLTIME = interval '%d' second(6) + interval '%d' day(3), USER_ID = '%s', LOG_FILENAME = '%s', QUEUE_ID = %d, NODE_COUNT = %d, FINALJOBSTATE = '%s', MEM_USED = %d, MEM_REQ = %d, GRES = '%s' where JOB_ID=%d and JOB_STEP_NO=%d and SUBMIT_TIME=timestamp '%s' and COMPLETION_TIME= timestamp '%s' and CLUSTER_NAME='%s'""" % values
+
+      cursor.execute("""update job_transaction set %s UNIX_GROUP = '%s', PROJECT = '%s', BEGIN_TIME = timestamp '%s',ELIGIBLETIME = timestamp '%s', TASK_COUNT = %d, REQ_WALLTIME = interval '%d' second(6) + interval '%d' day(3), USER_ID = '%s', LOG_FILENAME = '%s', QUEUE_ID = %d, NODE_COUNT = %d, FINALJOBSTATE = '%s', MEM_USED = %d, MEM_REQ = %d, GRES = '%s' where JOB_ID=%d and JOB_STEP_NO=%d and SUBMIT_TIME=timestamp '%s' and COMPLETION_TIME= timestamp '%s' and CLUSTER_NAME='%s'""" % values)
+
       ora_con.commit()
       body.ack()
       break
     except cx_Oracle.OperationalError, exc:
       sleep(60*60*3)
+#    except cx_Oracle.DatabaseError, exc:
+#      print """insert into job_transaction (JOB_ID,JOB_STEP_NO,UNIX_GROUP,PROJECT,SUBMIT_TIME,BEGIN_TIME,COMPLETION_TIME,ELIGIBLETIME,TASK_COUNT,REQ_WALLTIME,CLUSTER_NAME,USER_ID,LOG_FILENAME,QUEUE_ID,NODE_COUNT,FINALJOBSTATE,MEM_USED,MEM_REQ,GRES) values (%d,%d,'%s','%s',timestamp '%s',timestamp '%s', timestamp '%s',timestamp '%s', %d,interval '%d' second(6) + interval '%d' day(3), '%s','%s','%s',%d,%d,'%s',%d,%d,'%s')""" % values
+ #     print exc
+#      sys.exit(1)
        
 
 with BrokerConnection("localhost", "guest", "guest", "/") as amqp_con:
