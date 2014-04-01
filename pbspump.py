@@ -18,7 +18,7 @@ exechostpat = re.compile('/\d+')
 
 colnames = ('type','original_log_line','completion_time','jobid','step','username','project','group','queue','submit_time','eligibletime','start_time','nodelist','gres','requested_mem','walltime','exit_status','mem','filename')
 
-conversiondict = {'nodelist':'exec_host' ,'username':'user', 'group':'group','completion_time':'end','project':'account','queue':'queue','submit_time':'qtime','eligibletime':'etime','start_time':'start','gres':'Resource_List.gres','requested_mem':'Resource_List.mem','walltime':'Resource_List.walltime','exit_status':'Exit_status','mem':'resources_used.mem',}
+conversiondict = {'nodelist':'exec_host' ,'username':'user', 'group':'group','completion_time':'end','project':'account','queue':'queue','submit_time':'qtime','eligibletime':'etime','start_time':'start','gres':'Resource_List.gres','requested_mem':'Resource_List.mem','walltime':'Resource_List.walltime','exit_status':'Exit_status','mem':'resources_used.mem','vmem':'resources_used.mem','requested_vmem':'Resource_List.vmem'}
 
 def uniquify(seq, idfun=None): 
     # order preserving
@@ -184,6 +184,8 @@ def jobs():
   log = field_map(log,"mem",mem_convert)
   log = field_map(log,"filename",unicode)
   log = field_map(log,"requested_mem",mem_convert)
+  log = field_map(log,"requested_vmem",mem_convert)
+  log = field_map(log,"vmem",mem_convert)
   return log
 
 class PBSPumpDaemon(simpledaemon.Daemon):
