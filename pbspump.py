@@ -130,7 +130,7 @@ def job_start_completion_map(dictseq):
 
 def jobdict(lines):
    for line in lines:
-     if ';E;' in line:
+     if ';E;' in line and 'exec_host' in line:
        type = 'exit'
      elif ';S;' in line:
        type = 'start'
